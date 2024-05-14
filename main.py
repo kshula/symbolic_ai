@@ -3,64 +3,106 @@ from nltk.tokenize import word_tokenize
 from nltk import pos_tag
 
 
-class Symbolic:
+class AristotelianSyllogism:
     def __init__(self):
-        self.relationships = {}
+        self.major_premise = None
+        self.minor_premise = None
+        self.conclusion = None
 
-    def extract_meaning(self, premise):
-        # Tokenize and perform POS tagging on the premise
-        tokens = word_tokenize(premise.lower())
-        pos_tags = pos_tag(tokens)
+    def set_major_premise(self, major_premise):
+        self.major_premise = major_premise
 
-        # Extract entities (nouns) and attributes (verbs/adjectives/nouns) from the POS tags
-        nouns = [word for word, tag in pos_tags if tag.startswith('N')]
-        attributes = [word for word, tag in pos_tags if tag.startswith('V') or tag.startswith('JJ') or tag.startswith('N')]
+    def set_minor_premise(self, minor_premise):
+        self.minor_premise = minor_premise
 
-        # Store the relationships in the dictionary
-        self.relationships[premise] = (nouns, attributes)
-        print("Meaning of '{}':".format(premise))
-        print("Entities:", nouns)
-        print("Attributes:", attributes)
+    def derive_conclusion(self):
+        if self.major_premise is None or self.minor_premise is None:
+            print("Premises are not fully defined.")
+            return
 
-    def combine_premises(self, premise1, premise2):
-        if premise1 in self.relationships and premise2 in self.relationships:
-            nouns1, attributes1 = self.relationships[premise1]
-            nouns2, attributes2 = self.relationships[premise2]
+        # Tokenize and perform POS tagging on major premise
+        major_tokens = word_tokenize(self.major_premise.lower())
+        major_pos_tags = pos_tag(major_tokens)
 
-            # Find common entities between both premises
-            common_entities = set(nouns1).intersection(nouns2)
+        # Tokenize and perform POS tagging on minor premise
+        minor_tokens = word_tokenize(self.minor_premise.lower())
+        minor_pos_tags = pos_tag(minor_tokens)
 
-            if common_entities:
-                # Initialize a list to collect inherited qualities
-                inherited_qualities = []
+        # Extract entities (nouns) from major premise
+        major_entities = self.extract_entities(major_pos_tags)
 
-                # Iterate over attributes of premise2 to inherit relevant qualities to premise1
-                for attr in attributes2:
-                    if attr not in common_entities:  # Exclude attributes corresponding to common entities
-                        inherited_qualities.append(attr)
+        # Extract entities (nouns) from minor premise
+        minor_entities = self.extract_entities(minor_pos_tags)
 
-                if inherited_qualities:
-                    # Construct the conclusion based on inherited qualities
-                    conclusion = "{} {}".format(', '.join(nouns1), ' '.join(inherited_qualities))
-                    print("Conclusion based on inheritance:")
-                    print(conclusion)
-                else:
-                    print("No inherited qualities found for common entities.")
-            else:
-                print("No common entities found between the premises.")
-        else:
-            print("Invalid premises. Please provide valid statements.")
+        # Debugging prints
+        print("Major Premise:")
+        print("Entities:", major_entities)
 
-    def language(self):
-        premise1 = input("Enter premise 1: ")
-        premise2 = input("Enter premise 2: ")
+        print("\nMinor Premise:")
+        print("Entities:", minor_entities)
 
-        self.extract_meaning(premise1)
-        self.extract_meaning(premise2)
+        # Identify the middle term (shared entity)
+        middle_term = None
+        for entity in minor_entities:
+            if entity in major_entities:
+                middle_term = entity
+                break
 
-        # Combine premises and derive conclusions based on inheritance
-        self.combine_premises(premise1, premise2)
+        if middle_term is None:
+            print("Middle term does not match in premises.")
+            return
+
+        # Identify the subject and predicate for the conclusion
+        minor_subject = None
+        for entity in minor_entities:
+            if entity != middle_term:
+                minor_subject = entity
+                break
+
+        if minor_subject is None:
+            print("Minor subject not identified.")
+            return
+
+        major_predicate = None
+        for entity in major_entities:
+            if entity != middle_term:
+                major_predicate = entity
+                break
+
+        if major_predicate is None:
+            print("Major predicate not identified.")
+            return
+
+        # Derive the conclusion
+        self.conclusion = f"All {minor_subject} are {major_predicate}"
+
+    def extract_entities(self, pos_tags):
+        # Extract entities (nouns) from POS tags
+        entities = []
+
+        for token, pos_tag in pos_tags:
+            if pos_tag.startswith('N'):
+                entities.append(token)
+
+        return entities
+
+    def get_conclusion(self):
+        return self.conclusion
+
 
 # Example usage
-symbolic_engine = Symbolic()
-symbolic_engine.language()
+syllogism = AristotelianSyllogism()
+
+# Prompt user to input major premise
+major_input = input("Enter the major premise: ")
+syllogism.set_major_premise(major_input)
+
+# Prompt user to input minor premise
+minor_input = input("Enter the minor premise: ")
+syllogism.set_minor_premise(minor_input)
+
+# Derive conclusion
+syllogism.derive_conclusion()
+
+# Get and print the conclusion
+print("\nConclusion:", syllogism.get_conclusion())
