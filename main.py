@@ -28,63 +28,41 @@ class AristotelianSyllogism:
         minor_tokens = word_tokenize(self.minor_premise.lower())
         minor_pos_tags = pos_tag(minor_tokens)
 
-        # Extract entities (nouns) from major premise
-        major_entities = self.extract_entities(major_pos_tags)
+        # Debugging prints for major premise POS tags
+        print("Major Premise Full POS Tagging:")
+        print(major_pos_tags)
 
-        # Extract entities (nouns) from minor premise
-        minor_entities = self.extract_entities(minor_pos_tags)
+        # Debugging prints for minor premise POS tags
+        print("\nMinor Premise Full POS Tagging:")
+        print(minor_pos_tags)
 
-        # Debugging prints
-        print("Major Premise:")
-        print("Entities:", major_entities)
+        # Identify major term (predicate) from major premise
+        major_term = None
+        found_nns = 0  # Counter to track the NNS tags encountered
+        for word, tag in major_pos_tags:
+            if tag == 'NNS':
+                found_nns += 1
+                if found_nns == 2:  # Select the second NNS encountered
+                    major_term = word
+                    break
 
-        print("\nMinor Premise:")
-        print("Entities:", minor_entities)
-
-        # Identify the middle term (shared entity)
-        middle_term = None
-        for entity in minor_entities:
-            if entity in major_entities:
-                middle_term = entity
-                break
-
-        if middle_term is None:
-            print("Middle term does not match in premises.")
+        if major_term is None:
+            print("Major term not identified.")
             return
 
-        # Identify the subject and predicate for the conclusion
+        # Identify minor term (subject) from minor premise
         minor_subject = None
-        for entity in minor_entities:
-            if entity != middle_term:
-                minor_subject = entity
+        for word, tag in minor_pos_tags:
+            if tag == 'NNS':
+                minor_subject = word
                 break
 
         if minor_subject is None:
             print("Minor subject not identified.")
             return
 
-        major_predicate = None
-        for entity in major_entities:
-            if entity != middle_term:
-                major_predicate = entity
-                break
-
-        if major_predicate is None:
-            print("Major predicate not identified.")
-            return
-
         # Derive the conclusion
-        self.conclusion = f"All {minor_subject} are {major_predicate}"
-
-    def extract_entities(self, pos_tags):
-        # Extract entities (nouns) from POS tags
-        entities = []
-
-        for token, pos_tag in pos_tags:
-            if pos_tag.startswith('N'):
-                entities.append(token)
-
-        return entities
+        self.conclusion = f"All {minor_subject} are {major_term}."
 
     def get_conclusion(self):
         return self.conclusion
